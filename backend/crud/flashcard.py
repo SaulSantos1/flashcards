@@ -1,8 +1,6 @@
 from sqlalchemy.orm import Session
-
 from ..models.flashcard import Flashcard
 from ..schemas.flashcard import FlashcardCreate
-
 
 def create_flashcard(db: Session, flashcard: FlashcardCreate):
     db_flashcard = Flashcard(**flashcard.model_dump())
@@ -10,3 +8,19 @@ def create_flashcard(db: Session, flashcard: FlashcardCreate):
     db.commit()
     db.refresh(db_flashcard)
     return db_flashcard
+
+def get_flashcards_by_folder(db: Session, folder_id: int, skip: int = 0, limit: int = 10):
+    return (
+        db.query(Flashcard)
+        .filter(Flashcard.folder_id == folder_id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+def get_flashcard(db: Session, flashcard_id: int):
+    return db.query(Flashcard).filter(Flashcard.id == flashcard_id).first()
+
+def delete_flashcard(db: Session, flashcard_id: int):
+    db.query(Flashcard).filter(Flashcard.id == flashcard_id).delete()
+    db.commit()
