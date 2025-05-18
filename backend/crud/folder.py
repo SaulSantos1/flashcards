@@ -8,11 +8,13 @@ def create_folder(db: Session, folder: FolderCreate, user_id: int):
     db_folder = Folder(**folder.model_dump(), owner_id=user_id)
     db.add(db_folder)
     db.commit()
-    db.refresh()
+    db.refresh(db_folder)
     return db_folder
 
 
-def get_user_folders(db: Session, user_id: int, skip: int = 0, limit: int = 10):
+def get_user_folders(
+    db: Session, user_id: int, skip: int = 0, limit: int = 10
+):
     return (
         db.query(Folder)
         .filter(Folder.owner_id == user_id)
