@@ -12,13 +12,12 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
+
 def init_db():
     # Importe todos os modelos aqui
-    from backend.models.user import User
-    from backend.models.folder import Folder
-    from backend.models.flashcard import Flashcard
-    
+
     Base.metadata.create_all(bind=engine)
+
 
 def get_db():
     db = SessionLocal()
