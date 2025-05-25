@@ -12,18 +12,26 @@ import { Label } from "@/components/ui/label"
 import { EyeIcon, EyeOffIcon, Loader2, Github } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 
-export function LoginForm() {
+export function SignUpForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formData, setFormData] = useState({
+    name: "",
+    username: "",
     email: "",
     password: "",
-    rememberMe: false,
+    confirmPassword: "",
+    termsAgreed: false,
   })
   const [errors, setErrors] = useState({
+    name: "",
+    username: "",
     email: "",
     password: "",
+    confirmPassword: "",
+    termsAgreed: "",
     general: "",
   })
 
@@ -46,13 +54,35 @@ export function LoginForm() {
   const handleCheckboxChange = (checked: boolean) => {
     setFormData({
       ...formData,
-      rememberMe: checked,
+      termsAgreed: checked,
     })
+    if (errors.termsAgreed) {
+      setErrors({
+        ...errors,
+        termsAgreed: "",
+      })
+    }
   }
 
   const validateForm = () => {
     let valid = true
     const newErrors = { ...errors }
+
+    if (!formData.name) {
+      newErrors.name = "Name is required"
+      valid = false
+    }
+
+    if (!formData.username) {
+      newErrors.username = "Username is required"
+      valid = false
+    } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+      newErrors.username = "Username can only contain letters, numbers, and underscores"
+      valid = false
+    } else if (formData.username.length < 3) {
+      newErrors.username = "Username must be at least 3 characters"
+      valid = false
+    }
 
     if (!formData.email) {
       newErrors.email = "Email is required"
@@ -65,8 +95,21 @@ export function LoginForm() {
     if (!formData.password) {
       newErrors.password = "Password is required"
       valid = false
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters"
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters"
+      valid = false
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password"
+      valid = false
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match"
+      valid = false
+    }
+
+    if (!formData.termsAgreed) {
+      newErrors.termsAgreed = "You must agree to the terms"
       valid = false
     }
 
@@ -78,55 +121,65 @@ export function LoginForm() {
     e.preventDefault()
 
     if (!validateForm()) return
+
     setIsLoading(true)
     setErrors({ ...errors, general: "" })
 
     try {
-      const response = await fetch("http://localhost:8000/auth/token", {
+        const response = await fetch("http://localhost:8000/auth/signup", {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/json",
         },
-        body: new URLSearchParams({
-          username: formData.email,
-          password: formData.password,
+        body: JSON.stringify({
+            name: formData.name,
+            username: formData.username,
+            email: formData.email,
+            password: formData.password,
         }),
-      })
+        })
 
-      const data = await response.json()
+        const data = await response.json()
 
-      if (!response.ok) {
-        throw new Error(data.detail || "Login failed")
-      }
+        if (!response.ok) {
+        throw new Error(data.detail || "Signup failed")
+        }
 
-      localStorage.setItem("token", data.access_token)
-      router.push("/")
+        // Opcional: se backend retornar token direto após cadastro
+        if (data.access_token) {
+            localStorage.setItem("token", data.access_token)
+            router.push("/")
+        } else {
+            // Se não houver token, redireciona para login
+            router.push("/login")
+        }
     } catch (error) {
         let message = "Something went wrong"
 
         if (error instanceof Error) {
-          message = error.message
+        message = error.message
         }
-      setErrors({
+
+        setErrors({
         ...errors,
         general: message,
-      })
+        })
     } finally {
-      setIsLoading(false)
+        setIsLoading(false)
     }
-  }
+    }
 
-  const handleGoogleLogin = () => {
+  const handleGoogleSignUp = () => {
     setIsLoading(true)
-    // Simulate Google login
+    // Simulate Google sign up
     setTimeout(() => {
       router.push("/")
     }, 1500)
   }
 
-  const handleGithubLogin = () => {
+  const handleGithubSignUp = () => {
     setIsLoading(true)
-    // Simulate GitHub login
+    // Simulate GitHub sign up
     setTimeout(() => {
       router.push("/")
     }, 1500)
@@ -135,10 +188,43 @@ export function LoginForm() {
   return (
     <Card className="backdrop-blur-sm bg-white/80 border border-slate-200 shadow-lg rounded-xl p-6">
       {errors.general && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">{errors.general}</div>
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
+          {errors.general}
+        </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Full Name</Label>
+          <Input
+            id="name"
+            name="name"
+            type="text"
+            placeholder="John Doe"
+            value={formData.name}
+            onChange={handleChange}
+            className={errors.name ? "border-red-300 focus-visible:ring-red-300" : ""}
+            disabled={isLoading}
+          />
+          {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="username">Username</Label>
+          <Input
+            id="username"
+            name="username"
+            type="text"
+            placeholder="johndoe123"
+            value={formData.username}
+            onChange={handleChange}
+            className={errors.username ? "border-red-300 focus-visible:ring-red-300" : ""}
+            disabled={isLoading}
+          />
+          {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
+          <p className="text-xs text-slate-500 mt-1">3-20 characters, letters, numbers and underscores only</p>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -155,12 +241,7 @@ export function LoginForm() {
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
-            <a href="/forgot-password" className="text-xs text-blue-500 hover:text-blue-600 transition-colors">
-              Forgot password?
-            </a>
-          </div>
+          <Label htmlFor="password">Password</Label>
           <div className="relative">
             <Input
               id="password"
@@ -182,18 +263,48 @@ export function LoginForm() {
             </button>
           </div>
           {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+          <p className="text-xs text-slate-500 mt-1">Minimum 8 characters</p>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">Confirm Password</Label>
+          <div className="relative">
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              className={errors.confirmPassword ? "border-red-300 focus-visible:ring-red-300" : ""}
+              disabled={isLoading}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              tabIndex={-1}
+            >
+              {showConfirmPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+            </button>
+          </div>
+          {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
+        </div>
+
+        <div className="flex items-start space-x-2">
           <Checkbox
-            id="remember"
-            checked={formData.rememberMe}
+            id="terms"
+            checked={formData.termsAgreed}
             onCheckedChange={handleCheckboxChange}
             disabled={isLoading}
           />
-          <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
-            Remember me
-          </Label>
+          <div className="grid gap-1.5 leading-none">
+            <Label htmlFor="terms" className="text-sm font-normal cursor-pointer">
+              I agree to the <a href="/terms" className="text-blue-500 hover:underline">Terms of Service</a> and{" "}
+              <a href="/privacy" className="text-blue-500 hover:underline">Privacy Policy</a>
+            </Label>
+            {errors.termsAgreed && <p className="text-red-500 text-xs">{errors.termsAgreed}</p>}
+          </div>
         </div>
 
         <Button
@@ -204,10 +315,10 @@ export function LoginForm() {
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing in...
+              Creating account...
             </>
           ) : (
-            "Sign in"
+            "Sign up"
           )}
         </Button>
       </form>
@@ -226,7 +337,7 @@ export function LoginForm() {
           type="button"
           variant="outline"
           className="w-full border border-slate-200"
-          onClick={handleGoogleLogin}
+          onClick={handleGoogleSignUp}
           disabled={isLoading}
         >
           <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -253,7 +364,7 @@ export function LoginForm() {
           type="button"
           variant="outline"
           className="w-full border border-slate-200"
-          onClick={handleGithubLogin}
+          onClick={handleGithubSignUp}
           disabled={isLoading}
         >
           <Github className="mr-2 h-4 w-4" />

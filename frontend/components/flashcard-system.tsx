@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { FolderSidebar } from "@/components/folder-sidebar"
 import { FlashcardContent } from "@/components/flashcard-content"
 import { useMediaQuery } from "@/hooks/use-media-query"
@@ -81,6 +82,7 @@ const defaultFolders: FlashcardFolder[] = [
 ]
 
 export function FlashcardSystem() {
+  const router = useRouter()
   const [folders, setFolders] = useState<FlashcardFolder[]>([])
   const [currentFolderId, setCurrentFolderId] = useState<string>("")
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
@@ -88,6 +90,10 @@ export function FlashcardSystem() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
+    const token = localStorage.getItem("access_token")
+    if (!token) {
+      router.push("/login") // Redireciona para login se não estiver autenticado
+    }
     // Load folders from localStorage or use default folders
     const savedFolders = localStorage.getItem("flashcard-folders")
     if (savedFolders) {

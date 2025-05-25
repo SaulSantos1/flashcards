@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -9,9 +10,21 @@ import { FlashcardSystem } from "@/components/flashcard-system"
 
 export function WelcomeScreen() {
   const [getStarted, setGetStarted] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    const token = localStorage.getItem("access_token")
+    setIsAuthenticated(!!token)
+  }, [])
 
   if (getStarted) {
-    return <FlashcardSystem />
+    if (isAuthenticated) {
+      return <FlashcardSystem />
+    } else {
+      router.push("/login")
+      return null
+    }
   }
 
   return (
