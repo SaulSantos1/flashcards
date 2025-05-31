@@ -6,16 +6,23 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { motion, AnimatePresence } from "framer-motion"
-import type { FlashcardFolder } from "./flashcard-system"
+import type { FlashcardFolder, Flashcard } from "./flashcard-system"
 
 interface FlashcardContentProps {
   folder: FlashcardFolder
   currentIndex: number
-  onUpdateCards: (updatedCards: any[]) => void
+  onCreateCards: (folderId: string, newCard: Omit<Flashcard, 'id'>) => void; // Alterado
+  onUpdateCards: (updatedCards: Flashcard[]) => void
   onIndexChange: (newIndex: number) => void
 }
 
-export function FlashcardContent({ folder, currentIndex, onUpdateCards, onIndexChange }: FlashcardContentProps) {
+export function FlashcardContent({ 
+  folder, 
+  currentIndex, 
+  onCreateCards, 
+  onUpdateCards, 
+  onIndexChange 
+}: FlashcardContentProps) {
   const [flipped, setFlipped] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
@@ -28,33 +35,30 @@ export function FlashcardContent({ folder, currentIndex, onUpdateCards, onIndexC
   }, [folder.id, currentIndex])
 
   const nextCard = () => {
-    if (folder.cards.length === 0) return
-
+    if (folder.flashcards.length === 0) return
     setFlipped(false)
     setTimeout(() => {
-      onIndexChange((currentIndex + 1) % folder.cards.length)
+      onIndexChange((currentIndex + 1) % folder.flashcards.length)
     }, 200)
   }
 
   const prevCard = () => {
-    if (folder.cards.length === 0) return
-
+    if (folder.flashcards.length === 0) return
     setFlipped(false)
     setTimeout(() => {
-      onIndexChange((currentIndex - 1 + folder.cards.length) % folder.cards.length)
+      onIndexChange((currentIndex - 1 + folder.flashcards.length) % folder.flashcards.length)
     }, 200)
   }
 
   const toggleFlip = () => {
-    if (folder.cards.length === 0) return
+    if (folder.flashcards.length === 0) return
     setFlipped(!flipped)
   }
 
   const startEditing = () => {
-    if (folder.cards.length === 0) return
-
-    setEditedQuestion(folder.cards[currentIndex].question)
-    setEditedAnswer(folder.cards[currentIndex].answer)
+    if (folder.flashcards.length === 0) return
+    setEditedQuestion(folder.flashcards[currentIndex].question)
+    setEditedAnswer(folder.flashcards[currentIndex].answer)
     setIsEditing(true)
   }
 
@@ -71,7 +75,7 @@ export function FlashcardContent({ folder, currentIndex, onUpdateCards, onIndexC
 
   const saveCard = () => {
     if (isEditing) {
-      const updatedCards = [...folder.cards]
+      const updatedCards = [...folder.flashcards]
       updatedCards[currentIndex] = {
         ...updatedCards[currentIndex],
         question: editedQuestion,
@@ -81,21 +85,18 @@ export function FlashcardContent({ folder, currentIndex, onUpdateCards, onIndexC
       setIsEditing(false)
     } else if (isAdding) {
       const newCard = {
-        id: Date.now().toString(),
         question: editedQuestion,
         answer: editedAnswer,
       }
-      const updatedCards = [...folder.cards, newCard]
-      onUpdateCards(updatedCards)
-      onIndexChange(updatedCards.length - 1)
+      // Chama a função onCreateCards com o folderId e o novo card
+      onCreateCards(folder.id, newCard)
       setIsAdding(false)
     }
   }
 
   const deleteCard = () => {
-    if (folder.cards.length <= 0) return
-
-    const updatedCards = folder.cards.filter((_, index) => index !== currentIndex)
+    if (folder.flashcards.length <= 0) return
+    const updatedCards = folder.flashcards.filter((_, index) => index !== currentIndex)
     onUpdateCards(updatedCards)
     onIndexChange(Math.min(currentIndex, updatedCards.length - 1))
   }
@@ -159,13 +160,13 @@ export function FlashcardContent({ folder, currentIndex, onUpdateCards, onIndexC
       <div className="mb-4">
         <h2 className="text-2xl font-semibold text-slate-700">{folder.name}</h2>
         <p className="text-slate-500 text-sm">
-          {folder.cards.length} {folder.cards.length === 1 ? "card" : "cards"}
+          {folder.flashcards.length} {folder.flashcards.length === 1 ? "card" : "cards"}
         </p>
       </div>
 
       {/* Flashcard Display */}
       <div className="relative mb-6">
-        {folder.cards.length === 0 ? (
+        {folder.flashcards.length === 0 ? (
           <Card className="min-h-[300px] p-8 flex flex-col items-center justify-center text-center backdrop-blur-sm bg-white/80 border border-slate-200 shadow-lg rounded-xl">
             <p className="text-slate-500 mb-4">No flashcards in this folder yet.</p>
             <Button
@@ -191,18 +192,18 @@ export function FlashcardContent({ folder, currentIndex, onUpdateCards, onIndexC
                 onClick={toggleFlip}
               >
                 <div className="absolute top-2 right-2 text-xs text-slate-400">
-                  {currentIndex + 1} / {folder.cards.length}
+                  {currentIndex + 1} / {folder.flashcards.length}
                 </div>
                 <div className="w-full max-w-lg">
                   {flipped ? (
                     <div className="animate-fade-in">
                       <h3 className="text-lg font-medium text-slate-400 mb-2">Answer:</h3>
-                      <p className="text-xl text-slate-700">{folder.cards[currentIndex].answer}</p>
+                      <p className="text-xl text-slate-700">{folder.flashcards[currentIndex].answer}</p>
                     </div>
                   ) : (
                     <div className="animate-fade-in">
                       <h3 className="text-lg font-medium text-slate-400 mb-2">Question:</h3>
-                      <p className="text-xl text-slate-700">{folder.cards[currentIndex].question}</p>
+                      <p className="text-xl text-slate-700">{folder.flashcards[currentIndex].question}</p>
                     </div>
                   )}
                 </div>
@@ -221,7 +222,7 @@ export function FlashcardContent({ folder, currentIndex, onUpdateCards, onIndexC
             onClick={prevCard}
             className="flex items-center justify-center h-10 w-10 p-0 rounded-full border border-slate-200"
             aria-label="Previous card"
-            disabled={folder.cards.length <= 1}
+            disabled={folder.flashcards.length <= 1}
           >
             <ChevronLeft size={18} />
           </Button>
@@ -230,7 +231,7 @@ export function FlashcardContent({ folder, currentIndex, onUpdateCards, onIndexC
             onClick={nextCard}
             className="flex items-center justify-center h-10 w-10 p-0 rounded-full border border-slate-200"
             aria-label="Next card"
-            disabled={folder.cards.length <= 1}
+            disabled={folder.flashcards.length <= 1}
           >
             <ChevronRight size={18} />
           </Button>
@@ -241,7 +242,7 @@ export function FlashcardContent({ folder, currentIndex, onUpdateCards, onIndexC
             variant="outline"
             onClick={startEditing}
             className="flex items-center gap-1 border border-slate-200"
-            disabled={folder.cards.length === 0}
+            disabled={folder.flashcards.length === 0}
           >
             <Edit size={16} />
             Edit
@@ -250,7 +251,7 @@ export function FlashcardContent({ folder, currentIndex, onUpdateCards, onIndexC
             variant="outline"
             onClick={deleteCard}
             className="flex items-center gap-1 text-red-500 border border-slate-200 hover:bg-red-50 hover:text-red-600"
-            disabled={folder.cards.length === 0}
+            disabled={folder.flashcards.length === 0}
           >
             <Trash2 size={16} />
             Delete

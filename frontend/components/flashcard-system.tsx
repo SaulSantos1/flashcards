@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { FolderSidebar } from "@/components/folder-sidebar"
 import { FlashcardContent } from "@/components/flashcard-content"
 import { useMediaQuery } from "@/hooks/use-media-query"
@@ -9,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
-type Flashcard = {
+export type Flashcard = {
   id: string
   question: string
   answer: string
@@ -18,113 +17,61 @@ type Flashcard = {
 export type FlashcardFolder = {
   id: string
   name: string
-  cards: Flashcard[]
+  flashcards: Flashcard[]
 }
 
-const defaultFolders: FlashcardFolder[] = [
-  {
-    id: "react",
-    name: "React Basics",
-    cards: [
-      {
-        id: "1",
-        question: "What is React?",
-        answer: "A JavaScript library for building user interfaces",
-      },
-      {
-        id: "2",
-        question: "What is JSX?",
-        answer: "A syntax extension for JavaScript that allows you to write HTML-like code in your JavaScript files",
-      },
-      {
-        id: "3",
-        question: "What is a component in React?",
-        answer: "A reusable piece of code that returns a React element to be rendered to the page",
-      },
-    ],
-  },
-  {
-    id: "js",
-    name: "JavaScript",
-    cards: [
-      {
-        id: "1",
-        question: "What is a closure in JavaScript?",
-        answer:
-          "A function that has access to variables from its outer (enclosing) scope, even after the outer function has returned",
-      },
-      {
-        id: "2",
-        question: "What is the difference between let and var?",
-        answer:
-          "let is block-scoped while var is function-scoped. let was introduced in ES6 and helps prevent hoisting-related issues.",
-      },
-    ],
-  },
-  {
-    id: "css",
-    name: "CSS & Styling",
-    cards: [
-      {
-        id: "1",
-        question: "What is the box model in CSS?",
-        answer:
-          "A box that wraps around every HTML element, consisting of margins, borders, padding, and the actual content.",
-      },
-      {
-        id: "2",
-        question: "What is the difference between Flexbox and Grid?",
-        answer:
-          "Flexbox is one-dimensional and designed for layout in a single direction. Grid is two-dimensional and designed for more complex layouts.",
-      },
-    ],
-  },
-]
-
 export function FlashcardSystem() {
-  const router = useRouter()
   const [folders, setFolders] = useState<FlashcardFolder[]>([])
   const [currentFolderId, setCurrentFolderId] = useState<string>("")
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const isMobile = useMediaQuery("(max-width: 768px)")
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token")
-    if (!token) {
-      router.push("/login") // Redireciona para login se não estiver autenticado
-    }
-    // Load folders from localStorage or use default folders
-    const savedFolders = localStorage.getItem("flashcard-folders")
-    if (savedFolders) {
-      const parsedFolders = JSON.parse(savedFolders)
-      setFolders(parsedFolders)
-      // Set current folder to the first one if it exists
-      if (parsedFolders.length > 0) {
-        setCurrentFolderId(parsedFolders[0].id)
+    const fetchFlashcards = async () => {
+      try {
+        setIsLoading(true)
+        const token = localStorage.getItem("token")
+        
+        const response = await fetch("http://127.0.0.1:8000/folders", {
+          method: "GET",
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const data = await response.json()
+        console.log(data)
+        setFolders(data)
+        
+        if (data.length > 0) {
+          setCurrentFolderId(data[0].id)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to fetch flashcards")
+        console.error("Error fetching flashcards:", err)
+      } finally {
+        setIsLoading(false)
       }
-    } else {
-      setFolders(defaultFolders)
-      if (defaultFolders.length > 0) {
-        setCurrentFolderId(defaultFolders[0].id)
-      }
     }
+
+    fetchFlashcards()
   }, [])
 
-  useEffect(() => {
-    // Save folders to localStorage whenever they change
-    if (folders.length > 0) {
-      localStorage.setItem("flashcard-folders", JSON.stringify(folders))
-    }
-  }, [folders])
-
   // Get current folder
-  const currentFolder = folders.find((folder) => folder.id === currentFolderId) || { id: "", name: "", cards: [] }
+  const currentFolder = folders.find((folder) => folder.id === currentFolderId) || { id: "", name: "", flashcards: [] }
 
   const handleFolderSelect = (folderId: string) => {
     if (currentFolderId !== folderId) {
       setCurrentFolderId(folderId)
-      setCurrentCardIndex(0) // Reset to first card when changing folders
+      setCurrentCardIndex(0)
     }
 
     if (isMobile) {
@@ -141,42 +88,174 @@ export function FlashcardSystem() {
     }
   }
 
-  const handleAddFolder = (folderName: string) => {
-    const newFolder: FlashcardFolder = {
-      id: Date.now().toString(),
-      name: folderName,
-      cards: [],
-    }
-    const updatedFolders = [...folders, newFolder]
-    setFolders(updatedFolders)
-    setCurrentFolderId(newFolder.id)
-    setCurrentCardIndex(0)
-  }
+  const handleAddFolder = async (folderName: string) => {
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch("http://127.0.0.1:8000/folders", {
+        method: "POST",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: folderName })
+      })
 
-  const handleRenameFolder = (folderId: string, newName: string) => {
-    const updatedFolders = folders.map((folder) => (folder.id === folderId ? { ...folder, name: newName } : folder))
-    setFolders(updatedFolders)
-  }
+      if (!response.ok) {
+        throw new Error("Failed to create folder")
+      }
 
-  const handleDeleteFolder = (folderId: string) => {
-    const updatedFolders = folders.filter((folder) => folder.id !== folderId)
-    setFolders(updatedFolders)
-
-    if (currentFolderId === folderId && updatedFolders.length > 0) {
-      setCurrentFolderId(updatedFolders[0].id)
+      const newFolder = await response.json()
+      setFolders(prev => [...prev, newFolder])
+      setCurrentFolderId(newFolder.id)
       setCurrentCardIndex(0)
+    } catch (err) {
+      console.error("Error adding folder:", err)
+      setError("Failed to add folder")
     }
   }
 
-  const handleUpdateCards = (folderId: string, updatedCards: Flashcard[]) => {
-    const updatedFolders = folders.map((folder) =>
-      folder.id === folderId ? { ...folder, cards: updatedCards } : folder,
-    )
-    setFolders(updatedFolders)
+  const handleRenameFolder = async (folderId: string, newName: string) => {
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch(`http://127.0.0.1:8000/flashcards/${folderId}`, {
+        method: "PATCH",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: newName })
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to rename folder")
+      }
+
+      setFolders(prev => 
+        prev.map(folder => 
+          folder.id === folderId ? { ...folder, name: newName } : folder
+        )
+      )
+    } catch (err) {
+      console.error("Error renaming folder:", err)
+      setError("Failed to rename folder")
+    }
+  }
+
+  const handleDeleteFolder = async (folderId: string) => {
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch(`http://127.0.0.1:8000/flashcards/${folderId}`, {
+        method: "DELETE",
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to delete folder")
+      }
+
+      setFolders(prev => prev.filter(folder => folder.id !== folderId))
+
+      if (currentFolderId === folderId && folders.length > 1) {
+        const remainingFolders = folders.filter(folder => folder.id !== folderId)
+        setCurrentFolderId(remainingFolders[0].id)
+        setCurrentCardIndex(0)
+      }
+    } catch (err) {
+      console.error("Error deleting folder:", err)
+      setError("Failed to delete folder")
+    }
+  }
+
+  const handleUpdateCards = async (folderId: string, updatedCards: Flashcard[]) => {
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch(`http://127.0.0.1:8000/flashcards/${folderId}/cards`, {
+        method: "PUT",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ cards: updatedCards })
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update cards")
+      }
+
+      setFolders(prev => 
+        prev.map(folder => 
+          folder.id === folderId ? { ...folder, cards: updatedCards } : folder
+        )
+      )
+    } catch (err) {
+      console.error("Error updating cards:", err)
+      setError("Failed to update cards")
+    }
+  }
+
+  const handleCreateCards = async (folderId: string, newCard: Omit<Flashcard, 'id'>) => {
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch(`http://127.0.0.1:8000/flashcards/`, {
+        method: "POST",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          question: newCard.question,
+          answer: newCard.answer,
+          folder_id: parseInt(folderId) // Convertendo string para número
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to create cards")
+      }
+
+      const updatedFolder = await response.json()
+      
+      setFolders(prev => 
+        prev.map(folder => 
+          folder.id === folderId ? updatedFolder : folder
+        )
+      )
+      
+    } catch (err) {
+      console.error("Error creating cards:", err)
+      setError("Failed to create cards")
+    }
   }
 
   const handleCardIndexChange = (newIndex: number) => {
     setCurrentCardIndex(newIndex)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-red-500 text-center p-4">
+          <p>Error: {error}</p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -240,6 +319,7 @@ export function FlashcardSystem() {
             folder={currentFolder}
             currentIndex={currentCardIndex}
             onUpdateCards={(updatedCards) => handleUpdateCards(currentFolderId, updatedCards)}
+            onCreateCards={(folderId, newCards) => handleCreateCards(folderId, newCards)}
             onIndexChange={handleCardIndexChange}
           />
         </div>

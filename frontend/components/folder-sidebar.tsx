@@ -125,7 +125,7 @@ export function FolderSidebar({
                       )}
                       <Folder size={16} className={isActive ? "text-blue-500" : "text-slate-400"} />
                       <span className="truncate">{folder.name}</span>
-                      <span className="text-xs text-slate-400 ml-1">({folder.cards.length})</span>
+                      <span className="text-xs text-slate-400 ml-1">({folder.flashcards.length})</span>
                     </div>
 
                     <DropdownMenu>
@@ -165,9 +165,9 @@ export function FolderSidebar({
                   </div>
 
                   {/* Flashcard questions list */}
-                  {isExpanded && folder.cards.length > 0 && (
+                  {isExpanded && folder.flashcards.length > 0 && (
                     <ul className="ml-7 mt-1 mb-2 border-l border-slate-200 pl-2">
-                      {folder.cards.map((card, index) => (
+                      {folder.flashcards.map((card, index) => (
                         <li key={card.id}>
                           <div
                             className={cn(
@@ -187,7 +187,7 @@ export function FolderSidebar({
                   )}
 
                   {/* Empty folder message */}
-                  {isExpanded && folder.cards.length === 0 && (
+                  {isExpanded && folder.flashcards.length === 0 && (
                     <div className="ml-7 mt-1 mb-2 pl-2 text-xs text-slate-400 italic">No flashcards yet</div>
                   )}
                 </li>
