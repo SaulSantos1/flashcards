@@ -62,6 +62,7 @@ export function FolderSidebar({
         ...prev,
         [folderName]: true,
       }))
+      console.log("FolderName value:", folderName);
     }
 
     setIsDialogOpen(false)

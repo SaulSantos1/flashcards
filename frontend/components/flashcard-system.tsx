@@ -43,6 +43,11 @@ export function FlashcardSystem() {
           }
         })
 
+        if(response.status === 401){
+          localStorage.removeItem("token");
+          window.location.href = "/login";
+        }
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
@@ -198,6 +203,8 @@ export function FlashcardSystem() {
   const handleCreateCards = async (folderId: string, newCard: Omit<Flashcard, 'id'>) => {
     try {
       const token = localStorage.getItem("token")
+      console.log(folderId)
+      console.log(newCard)
       const response = await fetch(`http://127.0.0.1:8000/flashcards/`, {
         method: "POST",
         headers: {
@@ -219,7 +226,16 @@ export function FlashcardSystem() {
       
       setFolders(prev => 
         prev.map(folder => 
-          folder.id === folderId ? updatedFolder : folder
+          folder.id === folderId 
+          ? {
+              ...updatedFolder,
+              name: folder.name,
+              flashcards: [
+                ...(folder.flashcards || []), // Usa o array existente ou cria um novo se não existir
+                updatedFolder
+              ]
+            } 
+          : folder
         )
       )
       
