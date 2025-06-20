@@ -5,8 +5,7 @@ import { FolderSidebar } from "@/components/folder-sidebar"
 import { FlashcardContent } from "@/components/flashcard-content"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { Button } from "@/components/ui/button"
-import { Menu } from "lucide-react"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Header } from "./header"
 
 export type Flashcard = {
   id: string
@@ -78,19 +77,11 @@ export function FlashcardSystem() {
       setCurrentFolderId(folderId)
       setCurrentCardIndex(0)
     }
-
-    if (isMobile) {
-      setSidebarOpen(false)
-    }
   }
 
   const handleCardSelect = (folderId: string, cardIndex: number) => {
     setCurrentFolderId(folderId)
     setCurrentCardIndex(cardIndex)
-
-    if (isMobile) {
-      setSidebarOpen(false)
-    }
   }
 
   const handleAddFolder = async (folderName: string) => {
@@ -203,8 +194,6 @@ export function FlashcardSystem() {
   const handleCreateCards = async (folderId: string, newCard: Omit<Flashcard, 'id'>) => {
     try {
       const token = localStorage.getItem("token")
-      console.log(folderId)
-      console.log(newCard)
       const response = await fetch(`http://127.0.0.1:8000/flashcards/`, {
         method: "POST",
         headers: {
@@ -277,39 +266,20 @@ export function FlashcardSystem() {
   return (
     <div className="flex flex-col h-screen">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center">
-          {isMobile && (
-            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="mr-2">
-                  <Menu size={20} />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-[280px]">
-                <FolderSidebar
-                  folders={folders}
-                  currentFolderId={currentFolderId}
-                  currentCardIndex={currentCardIndex}
-                  onSelectFolder={handleFolderSelect}
-                  onSelectCard={handleCardSelect}
-                  onAddFolder={handleAddFolder}
-                  onRenameFolder={handleRenameFolder}
-                  onDeleteFolder={handleDeleteFolder}
-                />
-              </SheetContent>
-            </Sheet>
-          )}
-          <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-cyan-400">
-            Flashcard System
-          </h1>
-        </div>
-        <div>
-          <Button variant="outline" size="sm" asChild>
-            <a href="/login">Login</a>
-          </Button>
-        </div>
-      </header>
+      <Header
+        folders={folders}
+        currentFolderId={currentFolderId}
+        currentCardIndex={currentCardIndex}
+        onSelectFolder={handleFolderSelect}
+        onSelectCard={(index) => {
+          if (currentFolderId) {
+            handleCardSelect(currentFolderId, index)
+          }
+        }}
+        onAddFolder={handleAddFolder}
+        onRenameFolder={handleRenameFolder}
+        onDeleteFolder={handleDeleteFolder}
+      />
 
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
