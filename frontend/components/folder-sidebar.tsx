@@ -198,18 +198,6 @@ export function FolderSidebar({
         )}
       </div>
 
-      <div className="p-3 border-t border-slate-200">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleOpenAddDialog}
-          className="w-full flex items-center gap-1 text-xs"
-        >
-          <FolderPlus size={14} />
-          New Folder
-        </Button>
-      </div>
-
       {/* Folder Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">

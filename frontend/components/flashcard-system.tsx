@@ -113,8 +113,8 @@ export function FlashcardSystem() {
   const handleRenameFolder = async (folderId: string, newName: string) => {
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://127.0.0.1:8000/flashcards/${folderId}`, {
-        method: "PATCH",
+      const response = await fetch(`http://127.0.0.1:8000/folders/${folderId}`, {
+        method: "PUT",
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -140,7 +140,7 @@ export function FlashcardSystem() {
   const handleDeleteFolder = async (folderId: string) => {
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://127.0.0.1:8000/flashcards/${folderId}`, {
+      const response = await fetch(`http://127.0.0.1:8000/folders/${folderId}`, {
         method: "DELETE",
         headers: {
           'Authorization': `Bearer ${token}`
@@ -167,7 +167,7 @@ export function FlashcardSystem() {
   const handleUpdateCards = async (folderId: string, updatedCards: Flashcard[]) => {
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://127.0.0.1:8000/flashcards/${folderId}/cards`, {
+      const response = await fetch(`http://127.0.0.1:8000/folders/${folderId}/`, {
         method: "PUT",
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -271,9 +271,9 @@ export function FlashcardSystem() {
         currentFolderId={currentFolderId}
         currentCardIndex={currentCardIndex}
         onSelectFolder={handleFolderSelect}
-        onSelectCard={(index) => {
+        onSelectCard={(folderId, cardIndex) => {
           if (currentFolderId) {
-            handleCardSelect(currentFolderId, index)
+            handleCardSelect(currentFolderId, cardIndex)
           }
         }}
         onAddFolder={handleAddFolder}

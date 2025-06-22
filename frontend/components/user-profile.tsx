@@ -244,34 +244,6 @@ export function UserProfile() {
                 </CardContent>
               </Card>
 
-              {/* Recent Activity */}
-              <Card className="backdrop-blur-sm bg-white/80 border border-slate-200 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-green-500" />
-                    Recent Activity
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {recentActivity.map((activity) => (
-                      <div key={activity.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">
-                        <div className={`w-2 h-2 rounded-full ${
-                          activity.type === 'study' ? 'bg-blue-500' :
-                          activity.type === 'create' ? 'bg-green-500' :
-                          activity.type === 'complete' ? 'bg-purple-500' :
-                          activity.type === 'add' ? 'bg-orange-500' :
-                          'bg-yellow-500'
-                        }`} />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-slate-800">{activity.action}</p>
-                          <p className="text-xs text-slate-500">{activity.time}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
             </TabsContent>
 
             {/* Statistics Tab */}

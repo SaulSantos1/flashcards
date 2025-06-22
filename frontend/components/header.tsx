@@ -21,7 +21,7 @@ interface HeaderProps {
   currentFolderId?: string
   currentCardIndex?: number
   onSelectFolder?: (folderId: string) => void
-  onSelectCard?: (cardIndex: number) => void
+  onSelectCard?: (folderId: string, cardIndex: number)  => void
   onAddFolder?: (folderName: string) => void
   onRenameFolder?: (folderId: string, newName: string) => void
   onDeleteFolder?: (folderId: string) => void
@@ -53,9 +53,9 @@ export function Header({
     window.location.href = "/login"
   }
 
-  const handleCardSelectWrapper = (cardIndex: number) => {
-    onSelectCard?.(cardIndex)
-    if (isMobile) setSidebarOpen(false)
+  const handleCardSelectWrapper = (folderId: string, cardIndex: number) => {
+    onSelectCard?.(folderId, cardIndex); // Now matches the expected signature
+    if (isMobile) setSidebarOpen(false);
   }
 
   const handleFolderSelectWrapper = (folderId: string) => {
@@ -74,7 +74,7 @@ export function Header({
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-[280px]">
-              <FolderSidebar
+              <Header
                 folders={folders}
                 currentFolderId={currentFolderId}
                 currentCardIndex={currentCardIndex}
@@ -87,9 +87,11 @@ export function Header({
             </SheetContent>
           </Sheet>
         )}
-        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-cyan-400">
-          Flashcard System
-        </h1>
+        <a href="/"> 
+          <h5 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-cyan-400">
+            Flashcard System
+          </h5>
+        </a>
       </div>
       <div>
         {isLoggedIn ? (

@@ -2,10 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend.core.security import get_current_user
-from backend.crud import flashcard as crud_flashcard
-from backend.crud import folder as crud_folder
+from backend.crud.flashcard import create_flashcard, get_flashcard
+from backend.crud.flashcard import delete_flashcard as crud_delete_flashcard
+from backend.crud.flashcard import update_flashcard as crud_update_flashcard
+from backend.crud.folder import get_folder
 from backend.db.session import get_db
-from backend.schemas.flashcard import Flashcard, FlashcardCreate
+from backend.schemas.flashcard import (
+    Flashcard,
+    FlashcardCreate,
+    FlashcardUpdate,
+)
 from backend.schemas.user import User
 
 router = APIRouter(prefix='/flashcards', tags=['flashcards'])
@@ -18,27 +24,34 @@ def create_new_flashcard(
     current_user: User = Depends(get_current_user),
 ):
     # Verifica se a pasta pertence ao usuário
-    folder = crud_folder.get_folder(db, flashcard.folder_id)
+    folder = get_folder(db, flashcard.folder_id)
     if not folder or folder.owner_id != current_user.id:
         raise HTTPException(status_code=404, detail='Folder not found')
-    return crud_flashcard.create_flashcard(db=db, flashcard=flashcard)
+    return create_flashcard(db=db, flashcard=flashcard)
 
 
-@router.get('/folder/{folder_id}', response_model=list[Flashcard])
-def list_flashcards_in_folder(
-    folder_id: int,
-    skip: int = 0,
-    limit: int = 100,
+@router.put('/{flashcard_id}', response_model=Flashcard)
+def update_flashcard(
+    flashcard_id: int,
+    flashcard_update: FlashcardUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Verifica permissão
-    folder = crud_folder.get_folder(db, folder_id)
+    # First get the flashcard
+    flashcard = get_flashcard(db, flashcard_id)
+    if not flashcard:
+        raise HTTPException(status_code=404, detail='Flashcard not found')
+
+    # Check if the folder belongs to the user
+    folder = get_folder(db, flashcard.folder_id)
     if not folder or folder.owner_id != current_user.id:
-        raise HTTPException(status_code=404, detail='Folder not found')
-    return crud_flashcard.get_flashcards_by_folder(
-        db, folder_id=folder_id, skip=skip, limit=limit
+        raise HTTPException(status_code=403, detail='Not authorized')
+
+    # Update the flashcard
+    updated_flashcard = crud_update_flashcard(
+        db, flashcard_id, flashcard_update
     )
+    return updated_flashcard
 
 
 @router.delete('/{flashcard_id}')
@@ -47,13 +60,13 @@ def delete_flashcard(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    flashcard = crud_flashcard.get_flashcard(db, flashcard_id)
+    flashcard = get_flashcard(db, flashcard_id)
     if not flashcard:
         raise HTTPException(status_code=404, detail='Flashcard not found')
 
-    folder = crud_folder.get_folder(db, flashcard.folder_id)
+    folder = get_folder(db, flashcard.folder_id)
     if not folder or folder.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail='Not authorized')
 
-    crud_flashcard.delete_flashcard(db, flashcard_id)
+    crud_delete_flashcard(db, flashcard_id)
     return {'message': 'Flashcard deleted successfully'}

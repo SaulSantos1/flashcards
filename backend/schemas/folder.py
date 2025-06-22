@@ -13,6 +13,10 @@ class FolderCreate(FolderBase):
     pass
 
 
+class FolderUpdate(FolderBase):
+    pass
+
+
 class Folder(FolderBase):
     id: int
     owner_id: int

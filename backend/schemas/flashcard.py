@@ -1,5 +1,5 @@
-from typing import List
 from pydantic import BaseModel
+
 
 class FlashcardBase(BaseModel):
     question: str
@@ -7,6 +7,10 @@ class FlashcardBase(BaseModel):
 
 
 class FlashcardCreate(FlashcardBase):
+    folder_id: int
+
+
+class FlashcardUpdate(FlashcardBase):
     folder_id: int
 
 

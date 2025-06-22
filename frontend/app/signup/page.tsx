@@ -32,9 +32,11 @@ export default function SignUpPage() {
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-4 sm:p-8">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-cyan-400">
-            Flashcard System
-          </h1>
+          <a href="/"> 
+            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-cyan-400">
+              Flashcard System
+            </h1>
+          </a>
           <p className="text-slate-500 mt-2">Sign in to access your flashcards</p>
         </div>
 
