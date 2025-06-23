@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils"
 import type { FlashcardFolder } from "./flashcard-system"
 
 interface FolderSidebarProps {
+  darkMode?: boolean
   folders: FlashcardFolder[]
   currentFolderId: string
   currentCardIndex: number
@@ -23,6 +24,7 @@ interface FolderSidebarProps {
 }
 
 export function FolderSidebar({
+  darkMode = true,
   folders,
   currentFolderId,
   currentCardIndex,
@@ -36,6 +38,13 @@ export function FolderSidebar({
   const [folderName, setFolderName] = useState("")
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null)
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({})
+  const sidebarBg = darkMode ? "bg-gray-900" : "bg-white/80"
+  const borderColor = darkMode ? "border-gray-700" : "border-slate-200"
+  const textColor = darkMode ? "text-gray-300" : "text-slate-700"
+  const textSecondary = darkMode ? "text-gray-400" : "text-slate-500"
+  const hoverBg = darkMode ? "hover:bg-gray-700" : "hover:bg-slate-100"
+  const activeBg = darkMode ? "bg-blue-900/50" : "bg-blue-50"
+  const activeText = darkMode ? "text-blue-300" : "text-blue-600"
 
   const handleOpenAddDialog = () => {
     setFolderName("")
@@ -81,9 +90,9 @@ export function FolderSidebar({
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-3 flex items-center justify-between border-b border-slate-200">
-        <h2 className="font-medium text-sm text-slate-500">FOLDERS</h2>
+    <div className={`h-full flex flex-col ${sidebarBg} ${textColor}`}>
+      <div className={`p-3 flex items-center justify-between border-b ${borderColor}`}>
+        <h2 className={`font-medium text-sm ${textSecondary}`}>FOLDERS</h2>
         <Button variant="ghost" size="icon" onClick={handleOpenAddDialog} className="h-7 w-7">
           <Plus size={16} />
         </Button>
@@ -91,7 +100,7 @@ export function FolderSidebar({
 
       <div className="flex-1 overflow-y-auto">
         {folders.length === 0 ? (
-          <div className="p-4 text-center">
+          <div className={`p-4 text-center ${textSecondary}`}>
             <p className="text-sm text-slate-500 mb-2">No folders yet</p>
             <Button
               variant="outline"
@@ -114,7 +123,7 @@ export function FolderSidebar({
                   <div
                     className={cn(
                       "flex items-center justify-between rounded-md px-2 py-1.5 text-sm cursor-pointer group",
-                      isActive ? "bg-blue-50 text-blue-600" : "text-slate-700 hover:bg-slate-100",
+                      isActive ? `${activeBg} ${activeText}` : `${textColor} ${hoverBg}`,
                     )}
                     onClick={() => toggleFolderExpanded(folder.id)}
                   >
@@ -151,12 +160,9 @@ export function FolderSidebar({
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation()
-                            if (folders.length > 1) {
-                              onDeleteFolder(folder.id)
-                            }
+                            onDeleteFolder(folder.id)
                           }}
                           className="cursor-pointer text-red-500 focus:text-red-500"
-                          disabled={folders.length <= 1}
                         >
                           <Trash2 size={14} className="mr-2" />
                           Delete
@@ -166,16 +172,16 @@ export function FolderSidebar({
                   </div>
 
                   {/* Flashcard questions list */}
-                  {isExpanded && folder.flashcards.length > 0 && (
-                    <ul className="ml-7 mt-1 mb-2 border-l border-slate-200 pl-2">
+                  {isExpanded && (
+                    <ul className={`ml-7 mt-1 mb-2 border-l ${borderColor} pl-2`}>
                       {folder.flashcards.map((card, index) => (
                         <li key={card.id}>
                           <div
                             className={cn(
                               "px-2 py-1 text-xs rounded-md cursor-pointer truncate",
                               isActive && currentCardIndex === index
-                                ? "bg-blue-100 text-blue-700"
-                                : "text-slate-600 hover:bg-slate-50",
+                                ? darkMode ? "bg-blue-800/50 text-blue-200" : "bg-blue-100 text-blue-700"
+                                : darkMode ? "text-gray-400 hover:bg-gray-700/50" : "text-slate-600 hover:bg-slate-50",
                             )}
                             onClick={() => handleCardClick(folder.id, index)}
                             title={card.question}

@@ -12,10 +12,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { useState, useEffect } from "react"
-import { FolderSidebar } from "./folder-sidebar"
+import { Sun, Moon } from "lucide-react"
 import type { FlashcardFolder } from "./flashcard-system"
 
 interface HeaderProps {
+  darkMode?: boolean
+  toggleDarkMode?: () => void
   showSidebar?: boolean
   folders?: FlashcardFolder[]
   currentFolderId?: string
@@ -28,6 +30,8 @@ interface HeaderProps {
 }
 
 export function Header({
+  darkMode = true,
+  toggleDarkMode,
   showSidebar = false,
   folders = [],
   currentFolderId,
@@ -41,6 +45,9 @@ export function Header({
   const isMobile = useMediaQuery("(max-width: 768px)")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const headerBg = darkMode ? "bg-gray-900" : "bg-white"
+  const headerBorder = darkMode ? "border-gray-700" : "border-slate-200"
+  const buttonVariant = darkMode ? "outline" : "default"
 
   useEffect(() => {
     const token = localStorage.getItem("token")
@@ -64,7 +71,7 @@ export function Header({
   }
 
   return (
-    <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+      <header className={`${headerBg} border-b ${headerBorder} px-4 py-3 flex items-center justify-between`}>
       <div className="flex items-center">
         {showSidebar && isMobile && (
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -93,8 +100,21 @@ export function Header({
           </h5>
         </a>
       </div>
-      <div>
-        {isLoggedIn ? (
+
+      <div className="flex items-center gap-2">
+        <Button 
+          variant={buttonVariant} 
+          size="icon" 
+          onClick={toggleDarkMode}
+          className={`h-8 w-8 ${
+            darkMode ? "bg-gray-900 text-amber-300 border-none hover:bg-gray-700 hover:text-amber-300" 
+            : "bg-gray-200 text-amber-600 hover:bg-gray-300 hover:text-amber-600  "
+          }`}
+        >
+          {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+        </Button>
+
+        <div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -116,11 +136,7 @@ export function Header({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        ) : (
-          <Button variant="outline" size="sm" asChild>
-            <a href="/login">Login</a>
-          </Button>
-        )}
+        </div>
       </div>
     </header>
   )

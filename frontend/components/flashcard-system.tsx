@@ -6,6 +6,7 @@ import { FlashcardContent } from "@/components/flashcard-content"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { Button } from "@/components/ui/button"
 import { Header } from "./header"
+import { PanelLeft } from 'lucide-react';
 
 export type Flashcard = {
   id: string
@@ -26,7 +27,8 @@ export function FlashcardSystem() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const isMobile = useMediaQuery("(max-width: 768px)")
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile) // Sidebar aberto por padrão em desktop
+  const [darkMode, setDarkMode] = useState(true)
 
   useEffect(() => {
     const fetchFlashcards = async () => {
@@ -34,7 +36,7 @@ export function FlashcardSystem() {
         setIsLoading(true)
         const token = localStorage.getItem("token")
         
-        const response = await fetch("http://127.0.0.1:8000/folders", {
+        const response = await fetch("http://127.0.0.1:8000/folders/", {
           method: "GET",
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -87,7 +89,7 @@ export function FlashcardSystem() {
   const handleAddFolder = async (folderName: string) => {
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch("http://127.0.0.1:8000/folders", {
+      const response = await fetch("http://127.0.0.1:8000/folders/", {
         method: "POST",
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -113,7 +115,7 @@ export function FlashcardSystem() {
   const handleRenameFolder = async (folderId: string, newName: string) => {
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://127.0.0.1:8000/folders/${folderId}`, {
+      const response = await fetch(`http://127.0.0.1:8000/folders/${folderId}/`, {
         method: "PUT",
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -140,7 +142,7 @@ export function FlashcardSystem() {
   const handleDeleteFolder = async (folderId: string) => {
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://127.0.0.1:8000/folders/${folderId}`, {
+      const response = await fetch(`http://127.0.0.1:8000/folders/${folderId}/`, {
         method: "DELETE",
         headers: {
           'Authorization': `Bearer ${token}`
@@ -164,36 +166,73 @@ export function FlashcardSystem() {
     }
   }
 
-  const handleUpdateCards = async (folderId: string, updatedCards: Flashcard[]) => {
-    try {
-      const token = localStorage.getItem("token")
-      const response = await fetch(`http://127.0.0.1:8000/folders/${folderId}/`, {
-        method: "PUT",
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ cards: updatedCards })
-      })
+  const handleEditFlashcard = async (flashcardId: string, updatedData: { question: string, answer: string }) => {
+  try {
+    const token = localStorage.getItem("token")
+    const response = await fetch(`http://127.0.0.1:8000/flashcards/${flashcardId}/`, {
+      method: "PUT",
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updatedData)
+    })
 
-      if (!response.ok) {
-        throw new Error("Failed to update cards")
-      }
-
-      setFolders(prev => 
-        prev.map(folder => 
-          folder.id === folderId ? { ...folder, cards: updatedCards } : folder
-        )
-      )
-    } catch (err) {
-      console.error("Error updating cards:", err)
-      setError("Failed to update cards")
+    if (!response.ok) {
+      throw new Error("Failed to update flashcard")
     }
+
+    const updatedFlashcard = await response.json()
+    
+    setFolders(prev => 
+      prev.map(folder => ({
+        ...folder,
+        flashcards: folder.flashcards.map(card => 
+          card.id === flashcardId ? updatedFlashcard : card
+        )
+      }))
+    )
+  } catch (err) {
+    console.error("Error updating flashcard:", err)
+    setError("Failed to update flashcard")
   }
+}
+
+const handleDeleteFlashcard = async (flashcardId: string) => {
+  try {
+    const token = localStorage.getItem("token")
+    const response = await fetch(`http://127.0.0.1:8000/flashcards/${flashcardId}/`, {
+      method: "DELETE",
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error("Failed to delete flashcard")
+    }
+
+    setFolders(prev => 
+      prev.map(folder => ({
+        ...folder,
+        flashcards: folder.flashcards.filter(card => card.id !== flashcardId)
+      }))
+    )
+
+    // Ajustar o índice atual se necessário
+    const currentFolder = folders.find(folder => folder.id === currentFolderId)
+    if (currentFolder && currentCardIndex >= currentFolder.flashcards.length - 1) {
+      setCurrentCardIndex(Math.max(0, currentFolder.flashcards.length - 2))
+    }
+  } catch (err) {
+    console.error("Error deleting flashcard:", err)
+    setError("Failed to delete flashcard")
+  }
+}
 
   const handleCreateCards = async (folderId: string, newCard: Omit<Flashcard, 'id'>) => {
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
       const response = await fetch(`http://127.0.0.1:8000/flashcards/`, {
         method: "POST",
         headers: {
@@ -203,40 +242,57 @@ export function FlashcardSystem() {
         body: JSON.stringify({
           question: newCard.question,
           answer: newCard.answer,
-          folder_id: parseInt(folderId) // Convertendo string para número
+          folder_id: parseInt(folderId)
         })
-      })
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to create cards")
+        throw new Error("Failed to create cards");
       }
 
-      const updatedFolder = await response.json()
+      const createdFlashcard = await response.json(); // Assumindo que retorna o novo flashcard criado
       
       setFolders(prev => 
         prev.map(folder => 
           folder.id === folderId 
-          ? {
-              ...updatedFolder,
-              name: folder.name,
-              flashcards: [
-                ...(folder.flashcards || []), // Usa o array existente ou cria um novo se não existir
-                updatedFolder
-              ]
-            } 
-          : folder
+            ? {
+                ...folder,
+                flashcards: [
+                  ...(folder.flashcards || []),
+                  {
+                    id: createdFlashcard.id, // Certifique-se que a API retorna um ID
+                    question: createdFlashcard.question,
+                    answer: createdFlashcard.answer
+                  }
+                ]
+              } 
+            : folder
         )
-      )
+      );
       
     } catch (err) {
-      console.error("Error creating cards:", err)
-      setError("Failed to create cards")
+      console.error("Error creating cards:", err);
+      setError("Failed to create cards");
     }
-  }
+  };
 
   const handleCardIndexChange = (newIndex: number) => {
     setCurrentCardIndex(newIndex)
   }
+
+  useEffect(() => {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    setDarkMode(prefersDark)
+  }, [])
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode)
+  }
+
+  // Defina as classes de cor baseadas no dark mode
+  const bgColor = darkMode ? "bg-gray-900" : "bg-gray-50"
+  const textColor = darkMode ? "text-white" : "text-gray-900"
+  const borderColor = darkMode ? "border-gray-700" : "border-gray-200"
 
   if (isLoading) {
     return (
@@ -263,10 +319,12 @@ export function FlashcardSystem() {
     )
   }
 
-  return (
-    <div className="flex flex-col h-screen">
+ return (
+    <div className={`flex flex-col h-screen ${darkMode ? "bg-gradient-to-br from-black via-gray-900 to-black" : "bg-gray-50"} `}>
       {/* Header */}
       <Header
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
         folders={folders}
         currentFolderId={currentFolderId}
         currentCardIndex={currentCardIndex}
@@ -282,11 +340,35 @@ export function FlashcardSystem() {
       />
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar - Hidden on mobile */}
-        {!isMobile && (
-          <div className="w-64 border-r border-slate-200 bg-white/80 backdrop-blur-sm overflow-y-auto">
+      <div className="flex flex-1 overflow-hidden relative"> {/* Adicionado relative para posicionar o botão */}
+        {/* Botão de toggle do sidebar */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className={`absolute top-4 z-10 p-2 ${darkMode ? "text-gray-100" : "text-slate-700"} transition-all duration-200`}
+          style={{
+            left: sidebarOpen ? 'calc(17rem - 12px)' : '0.5rem',
+            transform: sidebarOpen ? 'translateX(0)' : 'translateX(0)',
+          }}
+        >
+
+          <PanelLeft className={`w-5 h-5 ${darkMode ? "text-white" : "text-gray-800"}`} />
+
+        </button>
+
+        {/* Sidebar */}
+        {(!isMobile || sidebarOpen) && (
+          <div 
+            className={`border-r ${borderColor} ${darkMode ? "bg-gray-800/80" : "bg-white/80"} backdrop-blur-sm overflow-y-auto transition-all duration-200`}
+            style={{
+              width: sidebarOpen ? '16rem' : '0',
+              transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+              position: isMobile ? 'fixed' : 'relative',
+              zIndex: 20,
+              height: '100%',
+            }}
+          >
             <FolderSidebar
+              darkMode={darkMode}
               folders={folders}
               currentFolderId={currentFolderId}
               currentCardIndex={currentCardIndex}
@@ -299,13 +381,23 @@ export function FlashcardSystem() {
           </div>
         )}
 
+        {/* Overlay para mobile quando sidebar está aberto */}
+        {isMobile && sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-10"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Main Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className={`flex-1 overflow-y-auto p-4 sm:p-6`}>
           <FlashcardContent
+            darkMode={darkMode}
             folder={currentFolder}
             currentIndex={currentCardIndex}
-            onUpdateCards={(updatedCards) => handleUpdateCards(currentFolderId, updatedCards)}
-            onCreateCards={(folderId, newCards) => handleCreateCards(folderId, newCards)}
+            onCreateCards={(folderId, newCard) => handleCreateCards(folderId, newCard)}
+            onEditFlashcard={handleEditFlashcard}
+            onDeleteFlashcard={handleDeleteFlashcard}
             onIndexChange={handleCardIndexChange}
           />
         </div>

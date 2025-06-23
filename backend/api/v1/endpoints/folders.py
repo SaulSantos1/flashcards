@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from backend.core.security import get_current_user
 from backend.crud.flashcard import get_flashcards_by_folder
+from backend.crud.flashcard import delete_all_flashcards_in_folder
 from backend.crud.folder import create_folder, get_folder, get_user_folders
 from backend.crud.folder import delete_folder as crud_delete_folder
 from backend.crud.folder import update_folder as crud_update_folder
@@ -93,6 +94,8 @@ def delete_folder(
     folder = get_folder(db, folder_id=folder_id)
     if not folder or folder.owner_id != current_user.id:
         raise HTTPException(status_code=404, detail='Folder not found')
+
+    delete_all_flashcards_in_folder(db=db, folder_id=folder_id)
 
     # Delete the folder
     deleted_folder = crud_delete_folder(db=db, folder_id=folder_id)

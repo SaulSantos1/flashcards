@@ -34,6 +34,9 @@ def delete_flashcard(db: Session, flashcard_id: int):
     db.query(Flashcard).filter(Flashcard.id == flashcard_id).delete()
     db.commit()
 
+def delete_all_flashcards_in_folder(db: Session, folder_id: int):
+    db.query(Flashcard).filter(Flashcard.folder_id == folder_id).delete()
+    db.commit()
 
 def update_flashcard(
     db: Session, flashcard_id: int, flashcard_update: FlashcardUpdate

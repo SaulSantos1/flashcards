@@ -11,7 +11,7 @@ class FlashcardCreate(FlashcardBase):
 
 
 class FlashcardUpdate(FlashcardBase):
-    folder_id: int
+    pass
 
 
 class Flashcard(FlashcardBase):

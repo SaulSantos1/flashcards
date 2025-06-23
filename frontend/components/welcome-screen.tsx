@@ -5,19 +5,28 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
-import { ArrowRight, Brain, Zap, BarChart3, Layers, Sparkles } from "lucide-react"
+import { ArrowRight, Brain, Zap, BarChart3, Layers, Sparkles, Sun, Moon } from "lucide-react"
 import { FlashcardSystem } from "@/components/flashcard-system"
 import { FlashcardPreview } from "@/components/flashcard-preview"
 
 export function WelcomeScreen() {
   const [getStarted, setGetStarted] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [darkMode, setDarkMode] = useState(true) // Default to dark mode
   const router = useRouter()
 
   useEffect(() => {
     const token = localStorage.getItem("access_token")
     setIsAuthenticated(!!token)
+    
+    // Check user's preferred color scheme
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    setDarkMode(prefersDark)
   }, [])
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode)
+  }
 
   if (getStarted) {
     if (isAuthenticated) {
@@ -28,18 +37,53 @@ export function WelcomeScreen() {
     }
   }
 
-    return (
+  const bgGradient = darkMode 
+    ? "bg-gradient-to-br from-black via-gray-900 to-black" 
+    : "bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200"
+
+  const textColor = darkMode ? "text-white" : "text-gray-900"
+  const textSecondary = darkMode ? "text-gray-400" : "text-gray-600"
+  const cardBg = darkMode ? "bg-gray-900/50" : "bg-white"
+  const cardBorder = darkMode ? "border-gray-800" : "border-gray-200"
+  const buttonVariant = darkMode ? "outline" : "default"
+  const featureCardHover = darkMode 
+    ? "hover:border-gray-700 hover:shadow-[0_0_15px_rgba(0,200,255,0.1)]" 
+    : "hover:border-gray-300 hover:shadow-[0_0_15px_rgba(0,100,255,0.1)]"
+
+  return (
     <>
-      <main className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
+      <main className={`min-h-screen ${bgGradient} transition-colors duration-300`}>
+        {/* Theme Toggle Button */}
+        <button
+          onClick={toggleDarkMode}
+          className={`fixed right-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-full ${
+            darkMode ? "bg-gray-800 text-amber-300" : "bg-gray-200 text-amber-600"
+          } transition-all`}
+        >
+          {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+
         {/* Hero Section */}
         <div className="relative overflow-hidden">
           {/* Background Elements */}
-          <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-purple-500/10 blur-3xl"></div>
-          <div className="absolute -right-40 -top-60 h-80 w-80 rounded-full bg-cyan-500/10 blur-3xl"></div>
-          <div className="absolute -bottom-20 left-1/2 h-60 w-60 -translate-x-1/2 rounded-full bg-purple-500/5 blur-3xl"></div>
+          {darkMode ? (
+            <>
+              <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-purple-500/10 blur-3xl"></div>
+              <div className="absolute -right-40 -top-60 h-80 w-80 rounded-full bg-cyan-500/10 blur-3xl"></div>
+              <div className="absolute -bottom-20 left-1/2 h-60 w-60 -translate-x-1/2 rounded-full bg-purple-500/5 blur-3xl"></div>
+            </>
+          ) : (
+            <>
+              <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-purple-500/5 blur-3xl"></div>
+              <div className="absolute -right-40 -top-60 h-80 w-80 rounded-full bg-cyan-500/5 blur-3xl"></div>
+              <div className="absolute -bottom-20 left-1/2 h-60 w-60 -translate-x-1/2 rounded-full bg-purple-500/3 blur-3xl"></div>
+            </>
+          )}
 
           {/* Grid Pattern Overlay */}
-          <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] bg-center opacity-10"></div>
+          <div className={`absolute inset-0 bg-[url('/grid-pattern.svg')] bg-center ${
+            darkMode ? "opacity-10" : "opacity-5"
+          }`}></div>
 
           <div className="container mx-auto px-4 py-20 md:py-32">
             <div className="flex flex-col items-center text-center">
@@ -47,7 +91,9 @@ export function WelcomeScreen() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="mb-6 inline-block rounded-full bg-gray-800/50 px-4 py-1.5 text-sm text-cyan-400 backdrop-blur-sm"
+                className={`mb-6 inline-block rounded-full ${
+                  darkMode ? "bg-gray-800/50 text-cyan-400" : "bg-gray-200/80 text-cyan-600"
+                } px-4 py-1.5 text-sm backdrop-blur-sm`}
               >
                 The Future of Learning
               </motion.div>
@@ -56,7 +102,7 @@ export function WelcomeScreen() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
-                className="mb-6 text-4xl font-bold tracking-tight text-white md:text-7xl"
+                className={`mb-6 text-4xl font-bold tracking-tight ${textColor} md:text-7xl`}
               >
                 <span className="bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
                   Neuro<span className="font-extralight">Flash</span>
@@ -67,7 +113,7 @@ export function WelcomeScreen() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="mb-10 max-w-2xl text-lg text-gray-400"
+                className={`mb-10 max-w-2xl text-lg ${textSecondary}`}
               >
                 Accelerate your learning with our advanced flashcard system powered by cognitive science. Designed for
                 the future, built for your brain.
@@ -84,16 +130,20 @@ export function WelcomeScreen() {
                   size="lg"
                   className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white hover:from-cyan-600 hover:to-purple-600"
                 >
-                  <Link href="/login?tab=register">
+                  <Link href="/signup">
                     Get Started <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
 
                 <Button
                   asChild
-                  variant="outline"
+                  variant={buttonVariant}
                   size="lg"
-                  className="border-gray-700 bg-black/30 text-gray-300 backdrop-blur-sm transition-all hover:border-cyan-500 hover:text-cyan-400"
+                  className={`${
+                    darkMode 
+                      ? "border-gray-700 bg-black/30 text-gray-300 hover:border-cyan-500 hover:text-cyan-400" 
+                      : "border-gray-300 bg-white/80 text-gray-700 hover:border-cyan-500 hover:text-cyan-600"
+                  } backdrop-blur-sm transition-all`}
                 >
                   <Link href="/login">Login</Link>
                 </Button>
@@ -107,12 +157,12 @@ export function WelcomeScreen() {
           <div className="container mx-auto px-4">
             <div className="flex flex-col items-center lg:flex-row lg:items-start lg:justify-between">
               <div className="mb-10 max-w-xl lg:mb-0 lg:pr-10">
-                <h2 className="mb-6 text-3xl font-bold text-white md:text-4xl">
+                <h2 className={`mb-6 text-3xl font-bold ${textColor} md:text-4xl`}>
                   <span className="bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
                     Intelligent Flashcards
                   </span>
                 </h2>
-                <p className="mb-8 text-gray-400">
+                <p className={`mb-8 ${textSecondary}`}>
                   Our flashcards are designed with advanced cognitive principles to optimize your learning experience.
                   The interactive 3D interface engages your spatial memory, while our spaced repetition algorithm
                   ensures you review cards at the perfect moment for maximum retention.
@@ -133,12 +183,18 @@ export function WelcomeScreen() {
                     },
                   ].map((feature, index) => (
                     <li key={index} className="flex items-start">
-                      <div className="mr-4 rounded-full bg-gradient-to-br from-cyan-500/20 to-purple-500/20 p-2">
-                        <feature.icon className="h-5 w-5 text-cyan-400" />
+                      <div className={`mr-4 rounded-full p-2 ${
+                        darkMode 
+                          ? "bg-gradient-to-br from-cyan-500/20 to-purple-500/20" 
+                          : "bg-gradient-to-br from-cyan-500/10 to-purple-500/10"
+                      }`}>
+                        <feature.icon className={`h-5 w-5 ${
+                          darkMode ? "text-cyan-400" : "text-cyan-600"
+                        }`} />
                       </div>
                       <div>
-                        <h3 className="font-medium text-white">{feature.title}</h3>
-                        <p className="text-sm text-gray-400">{feature.description}</p>
+                        <h3 className={`font-medium ${textColor}`}>{feature.title}</h3>
+                        <p className={`text-sm ${textSecondary}`}>{feature.description}</p>
                       </div>
                     </li>
                   ))}
@@ -146,10 +202,11 @@ export function WelcomeScreen() {
               </div>
 
               <div className="relative h-[400px] w-full max-w-md lg:w-1/2">
-                <div className="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-purple-500/5 blur-3xl"></div>
-                <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-cyan-500/5 blur-3xl"></div>
-
-                <FlashcardPreview />
+                {darkMode && (
+                  <div className="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-purple-500/5 blur-3xl"></div>
+                )}
+                
+                <FlashcardPreview darkMode={darkMode} />
               </div>
             </div>
           </div>
@@ -159,12 +216,12 @@ export function WelcomeScreen() {
         <section className="py-20">
           <div className="container mx-auto px-4">
             <div className="mb-16 text-center">
-              <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl">
+              <h2 className={`mb-4 text-3xl font-bold ${textColor} md:text-4xl`}>
                 <span className="bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
                   Why NeuroFlash?
                 </span>
               </h2>
-              <p className="mx-auto max-w-2xl text-gray-400">
+              <p className={`mx-auto max-w-2xl ${textSecondary}`}>
                 Our platform combines cutting-edge technology with proven learning methods to create the most effective
                 flashcard system available.
               </p>
@@ -205,13 +262,19 @@ export function WelcomeScreen() {
               ].map((feature, index) => (
                 <div
                   key={index}
-                  className="rounded-xl border border-gray-800 bg-gray-900/50 p-6 transition-all hover:border-gray-700 hover:shadow-[0_0_15px_rgba(0,200,255,0.1)]"
+                  className={`rounded-xl border ${cardBorder} ${cardBg} p-6 transition-all ${featureCardHover}`}
                 >
-                  <div className="mb-4 inline-flex rounded-full bg-gradient-to-br from-cyan-500/20 to-purple-500/20 p-3">
-                    <feature.icon className="h-6 w-6 text-cyan-400" />
+                  <div className={`mb-4 inline-flex rounded-full p-3 ${
+                    darkMode 
+                      ? "bg-gradient-to-br from-cyan-500/20 to-purple-500/20" 
+                      : "bg-gradient-to-br from-cyan-500/10 to-purple-500/10"
+                  }`}>
+                    <feature.icon className={`h-6 w-6 ${
+                      darkMode ? "text-cyan-400" : "text-cyan-600"
+                    }`} />
                   </div>
-                  <h3 className="mb-2 text-xl font-semibold text-white">{feature.title}</h3>
-                  <p className="text-gray-400">{feature.description}</p>
+                  <h3 className={`mb-2 text-xl font-semibold ${textColor}`}>{feature.title}</h3>
+                  <p className={textSecondary}>{feature.description}</p>
                 </div>
               ))}
             </div>
@@ -221,14 +284,29 @@ export function WelcomeScreen() {
         {/* CTA Section */}
         <section className="py-20">
           <div className="container mx-auto px-4">
-            <div className="relative overflow-hidden rounded-2xl border border-gray-800 bg-gradient-to-br from-gray-900 via-gray-800 to-black p-8 md:p-12">
-              <div className="absolute -left-20 -top-20 h-40 w-40 rounded-full bg-purple-500/10 blur-3xl"></div>
-              <div className="absolute -bottom-20 -right-20 h-40 w-40 rounded-full bg-cyan-500/10 blur-3xl"></div>
+            <div className={`relative overflow-hidden rounded-2xl border ${
+              darkMode ? "border-gray-800" : "border-gray-200"
+            } ${
+              darkMode 
+                ? "bg-gradient-to-br from-gray-900 via-gray-800 to-black" 
+                : "bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200"
+            } p-8 md:p-12`}>
+              {darkMode ? (
+                <>
+                  <div className="absolute -left-20 -top-20 h-40 w-40 rounded-full bg-purple-500/10 blur-3xl"></div>
+                  <div className="absolute -bottom-20 -right-20 h-40 w-40 rounded-full bg-cyan-500/10 blur-3xl"></div>
+                </>
+              ) : (
+                <>
+                  <div className="absolute -left-20 -top-20 h-40 w-40 rounded-full bg-purple-500/5 blur-3xl"></div>
+                  <div className="absolute -bottom-20 -right-20 h-40 w-40 rounded-full bg-cyan-500/5 blur-3xl"></div>
+                </>
+              )}
 
               <div className="relative z-10 flex flex-col items-center text-center md:flex-row md:text-left">
                 <div className="md:flex-1">
-                  <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl">Ready to transform your learning?</h2>
-                  <p className="mb-6 text-gray-400 md:mb-0">
+                  <h2 className={`mb-4 text-3xl font-bold ${textColor} md:text-4xl`}>Ready to transform your learning?</h2>
+                  <p className={`mb-6 ${textSecondary} md:mb-0`}>
                     Join thousands of students and professionals who have accelerated their learning with NeuroFlash.
                   </p>
                 </div>
@@ -250,7 +328,9 @@ export function WelcomeScreen() {
         </section>
 
         {/* Footer */}
-        <footer className="border-t border-gray-800 py-12">
+        <footer className={`border-t ${
+          darkMode ? "border-gray-800" : "border-gray-200"
+        } py-12`}>
           <div className="container mx-auto px-4">
             <div className="flex flex-col items-center justify-between md:flex-row">
               <div className="mb-6 md:mb-0">
@@ -259,17 +339,25 @@ export function WelcomeScreen() {
                     Neuro<span className="font-extralight">Flash</span>
                   </span>
                 </h2>
-                <p className="text-sm text-gray-500">© 2025 NeuroFlash. All rights reserved.</p>
+                <p className={`text-sm ${
+                  darkMode ? "text-gray-500" : "text-gray-400"
+                }`}>© 2025 NeuroFlash. All rights reserved.</p>
               </div>
 
               <div className="flex space-x-6">
-                <Link href="/terms" className="text-sm text-gray-400 hover:text-cyan-400">
+                <Link href="/terms" className={`text-sm ${
+                  darkMode ? "text-gray-400 hover:text-cyan-400" : "text-gray-500 hover:text-cyan-600"
+                }`}>
                   Terms
                 </Link>
-                <Link href="/privacy" className="text-sm text-gray-400 hover:text-cyan-400">
+                <Link href="/privacy" className={`text-sm ${
+                  darkMode ? "text-gray-400 hover:text-cyan-400" : "text-gray-500 hover:text-cyan-600"
+                }`}>
                   Privacy
                 </Link>
-                <Link href="/contact" className="text-sm text-gray-400 hover:text-cyan-400">
+                <Link href="/contact" className={`text-sm ${
+                  darkMode ? "text-gray-400 hover:text-cyan-400" : "text-gray-500 hover:text-cyan-600"
+                }`}>
                   Contact
                 </Link>
               </div>
