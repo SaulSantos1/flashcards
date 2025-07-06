@@ -105,7 +105,7 @@ export function WelcomeScreen() {
                 className={`mb-6 text-4xl font-bold tracking-tight ${textColor} md:text-7xl`}
               >
                 <span className="bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-                  Neuro<span className="font-extralight">Flash</span>
+                  Flash<span className="font-extralight">Cards</span>
                 </span>
               </motion.h1>
 
